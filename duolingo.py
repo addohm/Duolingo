@@ -3,6 +3,7 @@ import requests
 import re
 import sys
 import os
+from decouple import Csv, config
 from werkzeug.datastructures import MultiDict
 
 __version__ = "0.0"
@@ -559,7 +560,7 @@ for attr in attrs:
 if __name__ == '__main__':
     from pprint import pprint
 
-    duolingo = Duolingo('addohm', 'cracker')
+    duolingo = Duolingo(config['USER'], config['PASS'])
     # u = duolingo.request_userdata()
     v = duolingo.request_uservocab()
     # a = duolingo.get_activity_stream()
