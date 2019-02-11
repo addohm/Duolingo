@@ -35,7 +35,7 @@ class Duolingo(object):
         if password:
             self._login()
 
-        self.user_data = self.request_userdata()
+        # self.user_data = self.request_userdata()
 
     def _login(self):
         """
@@ -560,7 +560,7 @@ for attr in attrs:
 if __name__ == '__main__':
     from pprint import pprint
 
-    duolingo = Duolingo(config['USER'], config['PASS'])
+    duolingo = Duolingo(config('USER'), config('PASS'))
     # u = duolingo.request_userdata()
     v = duolingo.request_uservocab()
     # a = duolingo.get_activity_stream()
