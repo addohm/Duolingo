@@ -3,6 +3,7 @@ import requests
 import re
 import sys
 import os
+import random
 from decouple import Csv, config
 from werkzeug.datastructures import MultiDict
 
@@ -35,7 +36,8 @@ class Duolingo(object):
         if password:
             self._login()
 
-        # self.user_data = self.request_userdata()
+        self.user_data = self.request_userdata()
+        # self.user_vocab = self.request_uservocab()
 
     def _login(self):
         """
@@ -121,28 +123,28 @@ class Duolingo(object):
         :type unit: str
         :rtype: List
         """
-        # if unit:
-        #     url = 'https://www.duolingo.com/friendships/leaderboard_activity?unit={}&_={}'
-        # else:
-        #     raise Exception('Needs unit as argument (week or month)')
+        if unit:
+            url = 'https://www.duolingo.com/friendships/leaderboard_activity?unit={}&_={}'
+        else:
+            raise Exception('Needs unit as argument (week or month)')
 
-        # if before:
-        #     url = url.format(unit, before)
-        # else:
-        #     raise Exception('Needs str in Datetime format "%Y.%m.%d %H:%M:%S"')
+        if before:
+            url = url.format(unit, before)
+        else:
+            raise Exception('Needs str in Datetime format "%Y.%m.%d %H:%M:%S"')
 
-        # self.leader_data = self._make_req(url).json()
-        # data = []
-        # for result in iter(self.get_friends()):
-        #     for value in iter(self.leader_data['ranking']):
-        #         if result['id'] == int(value):
-        #             temp = {'points': int(self.leader_data['ranking'][value]),
-        #                     'unit': unit,
-        #                     'id': result['id'],
-        #                     'username': result['username']}
-        #             data.append(temp)
+        self.leader_data = self._make_req(url).json()
+        data = []
+        for result in iter(self.get_friends()):
+            for value in iter(self.leader_data['ranking']):
+                if result['id'] == int(value):
+                    temp = {'points': int(self.leader_data['ranking'][value]),
+                            'unit': unit,
+                            'id': result['id'],
+                            'username': result['username']}
+                    data.append(temp)
 
-        # return sorted(data, key=lambda user: user['points'], reverse=True)
+        return sorted(data, key=lambda user: user['points'], reverse=True)
         pass
 
     def buy_item(self, item_name, abbr):
@@ -201,16 +203,15 @@ class Duolingo(object):
 
     @staticmethod
     def _make_dict(keys, array):
-        # data = {}
+        data = {}
 
-        # for key in keys:
-        #     if type(array) == dict:
-        #         data[key] = array[key]
-        #     else:
-        #         data[key] = getattr(array, key, None)
+        for key in keys:
+            if type(array) == dict:
+                data[key] = array[key]
+            else:
+                data[key] = getattr(array, key, None)
 
-        # return data
-        pass
+        return data
 
     @staticmethod
     def _compute_dependency_order(skills):
@@ -260,119 +261,106 @@ class Duolingo(object):
         :return: List of languages
         :rtype: list of str
         """
-        # data = []
+        data = []
 
-        # for lang in self.user_data.languages:
-        #     if lang['learning']:
-        #         if abbreviations:
-        #             data.append(lang['language'])
-        #         else:
-        #             data.append(lang['language_string'])
+        for lang in self.user_data['languages']:
+            if lang['learning']:
+                if abbreviations:
+                    data.append(lang['language'])
+                else:
+                    data.append(lang['language_string'])
 
-        # return data
-        pass
+        return data
 
     def get_language_from_abbr(self, abbr):
         """Get language full name from abbreviation."""
-        # for language in self.user_data.languages:
-        #     if language['language'] == abbr:
-        #         return language['language_string']
-        # return None
-        pass
+        for language in self.user_data['languages']:
+            if language['language'] == abbr:
+                return language['language_string']
+        return None
 
     def get_abbreviation_of(self, name):
         """Get abbreviation of a language."""
-        # for language in self.user_data.languages:
-        #     if language['language_string'] == name:
-        #         return language['language']
-        # return None
-        pass
+        for language in self.user_data['languages']:
+            if language['language_string'] == name:
+                return language['language']
+        return None
 
     def get_language_details(self, language):
         """Get user's status about a language."""
-        # for lang in self.user_data.languages:
-        #     if language == lang['language_string']:
-        #         return lang
-
-        # return {}
-        pass
+        for lang in self.user_data['languages']:
+            if language == lang['language_string']:
+                return lang
+        return {}
 
     def get_user_info(self):
         """Get user's informations."""
-        # fields = ['username', 'bio', 'id', 'num_following', 'cohort',
-        #           'language_data', 'num_followers', 'learning_language_string',
-        #           'created', 'contribution_points', 'gplus_id', 'twitter_id',
-        #           'admin', 'invites_left', 'location', 'fullname', 'avatar',
-        #           'ui_language']
+        fields = ['username', 'bio', 'id', 'cohort',
+                  'language_data', 'learning_language_string',
+                  'created', 'gplus_id', 'twitter_id',
+                  'admin', 'location', 'fullname', 'avatar',
+                  'ui_language']
 
-        # return self._make_dict(fields, self.user_data)
-        pass
+        return self._make_dict(fields, self.user_data)
 
     def get_certificates(self):
         """Get user's certificates."""
-        # for certificate in self.user_data.certificates:
-        #     certificate['datetime'] = certificate['datetime'].strip()
+        for certificate in self.user_data.certificates:
+            certificate['datetime'] = certificate['datetime'].strip()
 
-        # return self.user_data.certificates
-        pass
+        return self.user_data.certificates
 
     def get_streak_info(self):
         """Get user's streak informations."""
-        # fields = ['daily_goal', 'site_streak', 'streak_extended_today']
-        # return self._make_dict(fields, self.user_data)
-        pass
+        fields = ['daily_goal', 'site_streak', 'streak_extended_today']
+        return self._make_dict(fields, self.user_data)
 
     def _is_current_language(self, abbr):
         """Get if user is learning a language."""
-        # return abbr in self.user_data.language_data.keys()
-        pass
-
+        return abbr in self.user_data['language_data'].keys()
+        
     def get_calendar(self, language_abbr=None):
         """Get user's last actions."""
-        # if language_abbr:
-        #     if not self._is_current_language(language_abbr):
-        #         self._switch_language(language_abbr)
-        #     return self.user_data.language_data[language_abbr]['calendar']
-        # else:
-        #     return self.user_data.calendar
-        pass
+        if language_abbr:
+            if not self._is_current_language(language_abbr):
+                self._switch_language(language_abbr)
+            return self.user_data['language_data'][language_abbr]['calendar']
+        else:
+            return self.user_data['calendar']
 
     def get_language_progress(self, lang):
         """Get informations about user's progression in a language."""
-        # if not self._is_current_language(lang):
-        #     self._switch_language(lang)
+        if not self._is_current_language(lang):
+            self._switch_language(lang)
 
-        # fields = ['streak', 'language_string', 'level_progress',
-        #           'num_skills_learned', 'level_percent', 'level_points',
-        #           'points_rank', 'next_level', 'level_left', 'language',
-        #           'points', 'fluency_score', 'level']
+        fields = ['streak', 'language_string', 'level_progress',
+                  'num_skills_learned', 'level_percent', 'level_points',
+                  'points_rank', 'next_level', 'level_left', 'language',
+                  'points', 'fluency_score', 'level']
 
-        # return self._make_dict(fields, self.user_data.language_data[lang])
-        pass
+        return self._make_dict(fields, self.user_data['language_data'][lang])
 
     def get_friends(self):
         """Get user's friends."""
-        # for k, v in iter(self.user_data.language_data.items()):
-        #     data = []
-        #     for friend in v['points_ranking_data']:
-        #         temp = {'username': friend['username'],
-        #                 'id': friend['id'],
-        #                 'points': friend['points_data']['total'],
-        #                 'languages': [i['language_string'] for i in
-        #                               friend['points_data']['languages']]}
-        #         data.append(temp)
+        for k, v in iter(self.user_data['language_data'].items()):
+            data = []
+            for friend in v['points_ranking_data']:
+                temp = {'username': friend['username'],
+                        'id': friend['id'],
+                        'points': friend['points_data']['total'],
+                        'languages': [i['language_string'] for i in
+                                      friend['points_data']['languages']]}
+                data.append(temp)
 
-        #     return data
-        pass
+            return data
 
     def get_known_words(self, lang):
         """Get a list of all words learned by user in a language."""
-        # words = []
-        # for topic in self.user_data.language_data[lang]['skills']:
-        #     if topic['learned']:
-        #         words += topic['words']
-        # return set(words)
-        pass
+        words = []
+        for topic in self.user_data['language_data'][lang]['skills']:
+            if topic['learned']:
+                words += topic['words']
+        return set(words)
 
     def get_learned_skills(self, lang):
         """
@@ -380,7 +368,7 @@ class Duolingo(object):
         in.
         """
         # skills = [skill for skill in
-        #           self.user_data.language_data[lang]['skills']]
+        #           self.user_data['language_data'][lang]['skills']]
 
         # self._compute_dependency_order(skills)
 
@@ -391,31 +379,27 @@ class Duolingo(object):
 
     def get_known_topics(self, lang):
         """Return the topics learned by a user in a language."""
-        # return [topic['title']
-        #         for topic in self.user_data.language_data[lang]['skills']
-        #         if topic['learned']]
-        pass
+        return [topic['title']
+                for topic in self.user_data['language_data'][lang]['skills']
+                if topic['learned']]
 
     def get_unknown_topics(self, lang):
         """Return the topics remaining to learn by a user in a language."""
-        # return [topic['title']
-        #         for topic in self.user_data.language_data[lang]['skills']
-        #         if not topic['learned']]
-        pass
+        return [topic['title']
+                for topic in self.user_data['language_data'][lang]['skills']
+                if not topic['learned']]
 
     def get_golden_topics(self, lang):
         """Return the topics mastered ("golden") by a user in a language."""
-        # return [topic['title']
-        #         for topic in self.user_data.language_data[lang]['skills']
-        #         if topic['learned'] and topic['strength'] == 1.0]
-        pass
+        return [topic['title']
+                for topic in self.user_data['language_data'][lang]['skills']
+                if topic['learned'] and topic['strength'] == 1.0]
 
     def get_reviewable_topics(self, lang):
         """Return the topics learned but not golden by a user in a language."""
-        # return [topic['title']
-        #         for topic in self.user_data.language_data[lang]['skills']
-        #         if topic['learned'] and topic['strength'] < 1.0]
-        pass
+        return [topic['title']
+                for topic in self.user_data.language_data[lang]['skills']
+                if topic['learned'] and topic['strength'] < 1.0]
 
     def get_translations(self, words, source=None, target=None):
         """
@@ -430,84 +414,81 @@ class Duolingo(object):
         :type target: str
         :return: Dict with words as keys and translations as values
         """
-        # if not source:
-        #     source = self.user_data.ui_language
-        # if not target:
-        #     target = list(self.user_data.language_data.keys())[0]
+        if not source:
+            source = self.user_data.ui_language
+        if not target:
+            target = list(self.user_data.language_data.keys())[0]
 
-        # word_parameter = json.dumps(words, separators=(',', ':'))
-        # url = "https://d2.duolingo.com/api/1/dictionary/hints/{}/{}?tokens={}" \
-        #     .format(target, source, word_parameter)
+        word_parameter = json.dumps(words, separators=(',', ':'))
+        url = "https://d2.duolingo.com/api/1/dictionary/hints/{}/{}?tokens={}" \
+            .format(target, source, word_parameter)
 
-        # request = self.session.get(url)
-        # try:
-        #     return request.json()
-        # except:
-        #     raise Exception('Could not get translations')
-        pass
+        request = self.session.get(url)
+        try:
+            return request.json()
+        except:
+            raise Exception('Could not get translations')
 
     def get_vocabulary(self, language_abbr=None):
         """Get overview of user's vocabulary in a language."""
-    #     if not self.password:
-    #         raise Exception("You must provide a password for this function")
-    #     if language_abbr and not self._is_current_language(language_abbr):
-    #         self._switch_language(language_abbr)
+        if not self.password:
+            raise Exception("You must provide a password for this function")
+        if language_abbr and not self._is_current_language(language_abbr):
+            self._switch_language(language_abbr)
 
-    #     overview_url = "https://www.duolingo.com/vocabulary/overview"
-    #     overview_request = self._make_req(overview_url)
-    #     overview = overview_request.json()
+        overview_url = "https://www.duolingo.com/vocabulary/overview"
+        overview_request = self._make_req(overview_url)
+        overview = overview_request.json()
 
-    #     return overview
-        pass
+        return overview
 
-    # _cloudfront_server_url = None
-    # _homepage_text = None
+    _cloudfront_server_url = None
+    _homepage_text = None
 
     @property
     def _homepage(self):
-        # if self._homepage_text:
-        #     return self._homepage_text
-        # homepage_url = "https://www.duolingo.com"
-        # request = self._make_req(homepage_url)
-        # self._homepage_text = request.text
-        # return self._homepage
-        pass
+        if self._homepage_text:
+            return self._homepage_text
+        homepage_url = "https://www.duolingo.com"
+        request = self._make_req(homepage_url)
+        self._homepage_text = request.text
+        return self._homepage
 
     @property
     def _cloudfront_server(self):
-        # if self._cloudfront_server_url:
-        #     return self._cloudfront_server_url
+        if self._cloudfront_server_url:
+            return self._cloudfront_server_url
 
-        # server_list = re.search('//.+\.cloudfront\.net', self._homepage)
-        # self._cloudfront_server_url = "https:{}".format(server_list.group(0))
+        server_list = re.search('//.+\.cloudfront\.net', self._homepage)
+        self._cloudfront_server_url = "https:{}".format(server_list.group(0))
 
-        # return self._cloudfront_server_url
-        pass
+        return self._cloudfront_server_url
 
-    # _tts_voices = None
+    _tts_voices = None
 
     def _process_tts_voices(self):
-        # voices_js = re.search('duo\.tts_multi_voices = {.+};',
-        #                       self._homepage).group(0)
+        '''
+        Needs to be changed, this regex fails
+        '''
+        voices_js = re.search('duo\.tts_multi_voices = {.+};',
+                              self._homepage).group(0)
 
-        # voices = voices_js[voices_js.find("{"):voices_js.find("}") + 1]
-        # self._tts_voices = json.loads(voices)
-        pass
+        voices = voices_js[voices_js.find("{"):voices_js.find("}") + 1]
+        self._tts_voices = json.loads(voices)
 
     def _get_voice(self, language_abbr, rand=False, voice=None):
-        # if not self._tts_voices:
-        #     self._process_tts_voices()
-        # if voice and voice != 'default':
-        #     return '{}/{}'.format(language_abbr, voice)
-        # if rand:
-        #     return random.choice(self._tts_voices[language_abbr])
-        # else:
-        #     return self._tts_voices[language_abbr][0]
-        pass
+        if not self._tts_voices:
+            self._process_tts_voices()
+        if voice and voice != 'default':
+            return '{}/{}'.format(language_abbr, voice)
+        if rand:
+            return random.choice(self._tts_voices[language_abbr])
+        else:
+            return self._tts_voices[language_abbr][0]
 
     def get_language_voices(self, language_abbr=None):
         # if not language_abbr:
-        #     language_abbr = list(self.user_data.language_data.keys())[0]
+        #     language_abbr = list(self.user_data['language_data'].keys())[0]
         # voices = []
         # if not self._tts_voices:
         #     self._process_tts_voices()
@@ -521,28 +502,27 @@ class Duolingo(object):
 
     def get_audio_url(self, word, language_abbr=None, random=True, voice=None):
         # if not language_abbr:
-        #     language_abbr = list(self.user_data.language_data.keys())[0]
+        #     language_abbr = list(self.user_data['language_data'].keys())[0]
         # tts_voice = self._get_voice(language_abbr, rand=random, voice=voice)
         # return "{}/tts/{}/token/{}".format(self._cloudfront_server, tts_voice,
         #                                    word)
         pass
 
     def get_related_words(self, word, language_abbr=None):
-        # if not self.password:
-        #     raise Exception("You must provide a password for this function")
-        # if language_abbr and not self._is_current_language(language_abbr):
-        #     self._switch_language(language_abbr)
+        if not self.password:
+            raise Exception("You must provide a password for this function")
+        if language_abbr and not self._is_current_language(language_abbr):
+            self._switch_language(language_abbr)
 
-        # overview_url = "https://www.duolingo.com/vocabulary/overview"
-        # overview_request = self._make_req(overview_url)
-        # overview = overview_request.json()
+        overview_url = "https://www.duolingo.com/vocabulary/overview"
+        overview_request = self._make_req(overview_url)
+        overview = overview_request.json()
 
-        # for word_data in overview['vocab_overview']:
-        #     if word_data['normalized_string'] == word:
-        #         related_lexemes = word_data['related_lexemes']
-        #         return [w for w in overview['vocab_overview']
-        #                 if w['lexeme_id'] in related_lexemes]
-        pass
+        for word_data in overview['vocab_overview']:
+            if word_data['normalized_string'] == word:
+                related_lexemes = word_data['related_lexemes']
+                return [w for w in overview['vocab_overview']
+                        if w['lexeme_id'] in related_lexemes]
 
 
 attrs = [
@@ -562,8 +542,20 @@ if __name__ == '__main__':
 
     duolingo = Duolingo(config('USER'), config('PASS'))
     # u = duolingo.request_userdata()
-    v = duolingo.request_uservocab()
-    # a = duolingo.get_activity_stream()
+    # v = duolingo.request_uservocab()
+    # ui = duolingo.get_user_info()
+    # st = duolingo.get_streak_info()
+    # p = duolingo.get_language_progress('zs')
+    # lb = duolingo.get_leaderboard('week', 'time')
     # knowntopic = duolingo.get_known_topics('zs')
-
-    pprint(v)
+    # ll = duolingo.get_languages(abbreviations=True)
+    # c = duolingo.get_calendar()
+    # w = duolingo.get_known_words('zs')
+    # s = duolingo.get_learned_skills('zs') # BROKEN
+    # t = duolingo.get_known_topics('zs')
+    # tr = duolingo.get_translations('你', 'en', 'zs')
+    # v = duolingo.get_vocabulary('zs')
+    # lv = duolingo.get_language_voices() # BROKEN at _process_tts_voices
+    # au = duolingo.get_audio_url('你') # BROKEN at _process_tts_voices
+    # rw = duolingo.get_related_words('你') # ?Returns none?
+    pprint(p)
