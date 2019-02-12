@@ -7,6 +7,7 @@ import random
 from decouple import Csv, config
 from werkzeug.datastructures import MultiDict
 
+
 __version__ = "0.0"
 __originalauthor__ = "Kartik Talwar"
 __forkauthor__ = "Adam S. Leven"
@@ -295,6 +296,9 @@ class Duolingo(object):
 
     def get_user_info(self):
         """Get user's informations."""
+        # num_following, num_followers moved to the tracking_properties dict
+        # havent found contribution_points or invites left
+        # All of which have been removed.
         fields = ['username', 'bio', 'id', 'cohort',
                   'language_data', 'learning_language_string',
                   'created', 'gplus_id', 'twitter_id',
@@ -543,7 +547,7 @@ if __name__ == '__main__':
     duolingo = Duolingo(config('USER'), config('PASS'))
     # u = duolingo.request_userdata()
     # v = duolingo.request_uservocab()
-    # ui = duolingo.get_user_info()
+    ui = duolingo.get_user_info()
     # st = duolingo.get_streak_info()
     # p = duolingo.get_language_progress('zs')
     # lb = duolingo.get_leaderboard('week', 'time')
@@ -558,4 +562,4 @@ if __name__ == '__main__':
     # lv = duolingo.get_language_voices() # BROKEN at _process_tts_voices
     # au = duolingo.get_audio_url('你') # BROKEN at _process_tts_voices
     # rw = duolingo.get_related_words('你') # ?Returns none?
-    pprint(p)
+    pprint(ui)
