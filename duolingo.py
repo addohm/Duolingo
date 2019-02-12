@@ -38,7 +38,11 @@ class Duolingo(object):
             self._login()
 
         self.user_data = self.request_userdata()
-        # self.user_vocab = self.request_uservocab()
+        with open('userdata.json', 'w') as f:
+            json.dump(self.user_data, f, indent=2, ensure_ascii=False)
+        self.user_vocab = self.request_uservocab()
+        with open('uservocab.json', 'w') as f:
+            json.dump(self.user_vocab, f, indent=2, ensure_ascii=False)
 
     def _login(self):
         """
